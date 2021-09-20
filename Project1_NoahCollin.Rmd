@@ -1,0 +1,104 @@
+---
+title: "607_Project1_NoahCollin"
+author: "Noah Collin"
+email: "NOAH.COLLIN35@login.cuny.edu"
+date: "9/16/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library (stringr)
+```
+
+## Project 1
+## Reading in the file
+This look a lot of trial and error to figure out which read function to use, much more than 4 attempts.
+```{r firstCodeBlock}
+test4 <- readLines(file("tournamentinfo.txt"))
+tail(test4)
+```
+
+## Divide Data into header (which was 2 lines) and data:
+
+## 
+```{r string}
+test5 <- test4[-seq(from = 1,to=length(test4), by=3)]
+#head(test5, 12)
+
+header <- paste(test5[1],test5[2])
+#header
+test5 <-  test5[3:length(test5)]
+#head(test5)
+```
+
+## Strings Extract
+
+``` {r string2}
+player_names <- c()
+Total_Col <- c()
+player_states <- c()
+pre_ranks <- c()
+post_ranks <- c()
+whole_lines <- c()
+
+library(stringr)
+for (line in 1:length(test5)) {
+  if (line %%2 == 1) {
+    player_names <- c(player_names,unlist(str_extract_all(test5[line],"\\w+[^USCF|a-z] ?\\w+ \\w+")))
+    
+    whole_lines <-  c(whole_lines,(str_extract_all(test5[line],"(\\d+\\.?\\d?)")))
+    
+  }
+  if (line %%2 ==0) {
+    player_states <-  c(player_states,
+                        unlist(str_extract_all(test5[line],"[A-Z][A-Z]")))
+    
+    pre_ranks <- c(pre_ranks,
+                   unlist(str_extract_all(test5[line], "R:\\s+(\\d+)")))
+    
+    post_ranks <- c(post_ranks,
+                   unlist(str_extract_all(test5[line], "->\\s*(\\d+)")))
+    
+  }
+  
+}
+Total_Col <- as.numeric(Total_Col)
+head(player_states)
+# Turn ranks to numerics:
+pre_ranks_cleaned <- as.numeric(unlist(str_extract_all(pre_ranks,"\\d+")))
+post_ranks_cleaned <- as.numeric(unlist(str_extract_all(post_ranks,"\\d+")))
+
+
+#To test the first RegEx of player names:
+#unlist((str_extract_all(test5[1],"\\w+[^USCF|a-z] ?\\w+ \\w+")))
+
+```
+
+## Get means of ranks and fix The total score column
+```{r playerMatches}
+Total_Col <- c()
+rank_means <- c()
+for (p in whole_lines) {
+  #print(p[2])
+  p <- (as.numeric(p))
+  matches <- p[3:length(p)]
+  #print(matches)
+  #print(mean(pre_ranks_cleaned[matches]))
+  rank_means <- c(rank_means,mean(pre_ranks_cleaned[matches]))
+  Total_Col <- c(Total_Col, p[2])
+}
+Total_Col <-  Total_Col[1:64]
+# I don't know why the above line was necessary but it was.  When I printed p[2] above, it was length 64.  When I made a vector it was length of 128.  So I just sliced it in half.
+```
+
+## DataFrame
+```{r dataframe and CSV step}
+df <- data.frame(player_names,player_states,Total_Col,pre_ranks_cleaned,post_ranks_cleaned,rank_means)
+df
+```
+## Write CSV
+```{r write CSV}
+write.csv(df,"NoahCollin_607_Project1.csv",quote=FALSE,row.names = F)
+```
